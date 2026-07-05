@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Lilfybr",
   description: "Handmade crochet pieces by Lilfybr",
   icons: {
-    icon: "/logoo.png"
+    icon: "/favicon.png"
   }
 }
 
