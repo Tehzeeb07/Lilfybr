@@ -18,16 +18,19 @@ export default function LoginPage() {
     setLoading(true)
     setMessage("")
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+})
 
-    if (error) {
-      setMessage(error.message)
-      setLoading(false)
-      return
-    }
+console.log("DATA:", data)
+console.log("ERROR:", error)
+
+if (error) {
+  console.error(error)
+  setMessage(JSON.stringify(error, null, 2))
+  return
+}
 
     setLoading(false)
     router.push("/profile")
