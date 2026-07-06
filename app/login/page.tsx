@@ -1,4 +1,5 @@
 "use client"
+console.log(process.env.NEXT_PUBLIC_SUPABASE_URL)
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
