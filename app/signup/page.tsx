@@ -28,6 +28,23 @@ export default function SignupPage() {
       return
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email ?? email,
+      })
+
+      if (profileError) {
+        setMessage(`Account created, but profile sync failed: ${profileError.message}`)
+        setLoading(false)
+        return
+      }
+    }
+
     setMessage("Account created successfully! Redirecting...")
 
     setLoading(false)

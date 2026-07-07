@@ -5,26 +5,20 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-type UserWithRole = {
+type ProfileRow = {
   email?: string
   role?: string | null
-}
-
-type FavoriteProduct = {
-  id: string
-  name: string
-}
-
-type FavoriteRow = {
-  product_id: string
+  full_name?: string | null
+  phone?: string | null
+  avatar_url?: string | null
+  default_address?: Record<string, unknown> | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserWithRole | null>(null)
+  const [user, setUser] = useState<ProfileRow | null>(null)
   const [loading, setLoading] = useState(true)
-  const [favoritesCount, setFavoritesCount] = useState(0)
-  const [favoriteProducts, setFavoriteProducts] = useState<FavoriteProduct[]>([])
-
   const router = useRouter()
 
   useEffect(() => {
@@ -39,35 +33,19 @@ export default function ProfilePage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("email, full_name, phone, avatar_url, role, default_address, created_at, updated_at")
         .eq("id", authData.user.id)
         .single()
 
-      const { data: favorites } = await supabase
-        .from("favorites")
-        .select("product_id")
-        .eq("user_id", authData.user.id)
-
-      const favoriteRows = (favorites ?? []) as FavoriteRow[]
-      const productIds = favoriteRows.map((item) => item.product_id)
-
-      let products: FavoriteProduct[] = []
-
-      if (productIds.length > 0) {
-        const { data } = await supabase
-          .from("products")
-          .select("id, name")
-          .in("id", productIds)
-
-        products = (data ?? []) as FavoriteProduct[]
-      }
-
-      setFavoritesCount(products.length)
-      setFavoriteProducts(products)
-
       setUser({
-        email: authData.user.email,
+        email: profile?.email ?? authData.user.email,
         role: profile?.role ?? "customer",
+        full_name: profile?.full_name ?? null,
+        phone: profile?.phone ?? null,
+        avatar_url: profile?.avatar_url ?? null,
+        default_address: profile?.default_address ?? null,
+        created_at: profile?.created_at ?? null,
+        updated_at: profile?.updated_at ?? null,
       })
 
       setLoading(false)
@@ -129,38 +107,34 @@ export default function ProfilePage() {
             <span className="font-semibold text-[var(--text)]">Email:</span>{" "}
             {user?.email}
           </p>
-
           <p>
             <span className="font-semibold text-[var(--text)]">Role:</span>{" "}
             {user?.role ?? "customer"}
           </p>
-        </div>
-
-        <div className="mt-10 border bg-[var(--surface)] p-7">
-          <h2 className="font-serif text-3xl font-semibold">Your Favorites</h2>
-
-          {favoriteProducts.length === 0 ? (
-            <p className="mt-4 text-[var(--text-soft)]">No favorite products yet.</p>
-          ) : (
-            <div className="mt-6 space-y-3">
-              {favoriteProducts.map((product) => (
-                <div key={product.id} className="border p-4">
-                  ❤️ {product.name}
-                </div>
-              ))}
-            </div>
-          )}
+          <p>
+            <span className="font-semibold text-[var(--text)]">Full name:</span>{" "}
+            {user?.full_name ?? "Not set"}
+          </p>
+          <p>
+            <span className="font-semibold text-[var(--text)]">Phone:</span>{" "}
+            {user?.phone ?? "Not set"}
+          </p>
+          <p>
+            <span className="font-semibold text-[var(--text)]">Avatar:</span>{" "}
+            {user?.avatar_url ?? "Not set"}
+          </p>
+          <p>
+            <span className="font-semibold text-[var(--text)]">Address:</span>{" "}
+            {user?.default_address ? "Saved" : "Not set"}
+          </p>
         </div>
 
         <div className="mt-10 border bg-[var(--pink-100)] p-7">
           <h2 className="font-serif text-3xl font-semibold">Shopping flow</h2>
-
           <p className="mt-4 max-w-3xl leading-8 text-[var(--text-soft)]">
-            Anyone can browse products, photos, prices, and descriptions.
-            Signed-in customers will be able to save favorites, add items to cart,
-            place orders, and view order history.
+            Anyone can browse products, photos, prices, and descriptions. Signed-in customers can save favorites,
+            add items to cart, place orders, and view order history.
           </p>
-
           <Link
             href="/#collection"
             className="mt-6 inline-flex border border-[var(--pink-500)] bg-[var(--pink-500)] px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[var(--text)]"

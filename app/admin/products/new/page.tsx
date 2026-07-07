@@ -26,42 +26,50 @@ export default function NewProductPage() {
   const router = useRouter()
 
   useEffect(() => {
-  const load = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    let isMounted = true
 
-    if (!user) {
-      router.push("/login")
-      return
-    }
+    const load = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
+      if (!user) {
+        router.push("/login")
+        return
+      }
 
-    if (profile?.role !== "admin") {
-      router.push("/profile")
-      return
-    }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
 
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id,name")
-      .order("name")
+      if (profile?.role !== "admin") {
+        router.push("/profile")
+        return
+      }
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id,name")
+        .order("name")
 
       if (error) {
         console.error(error)
         return
       }
 
-      setCategories((data ?? []) as Category[])
+      if (isMounted) {
+        setCategories((data ?? []) as Category[])
+      }
     }
 
-    load()
-  }, [])
+    void load()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()

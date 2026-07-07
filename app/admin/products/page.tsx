@@ -25,48 +25,54 @@ export default function AdminProductsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const router = useRouter()
 
-  const loadProducts = async () => {
-    setLoading(true)
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      router.push("/login")
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
-
-    if (profile?.role !== "admin") {
-      router.push("/profile")
-      return
-    }
-
-    const { data, error } = await supabase
-      .from("products")
-      .select("id,name,slug,price,stock_quantity,is_active,is_featured,category_id,categories(name)")
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error(error)
-      alert("Failed to load products")
-      setLoading(false)
-      return
-    }
-
-    setProducts(((data ?? []) as unknown) as Product[])
-    setLoading(false)
-  }
-
   useEffect(() => {
-    loadProducts()
-  }, [])
+    let isMounted = true
+
+    const loadProducts = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+
+      if (profile?.role !== "admin") {
+        router.push("/profile")
+        return
+      }
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,name,slug,price,stock_quantity,is_active,is_featured,category_id,categories(name)")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error(error)
+        alert("Failed to load products")
+        if (isMounted) setLoading(false)
+        return
+      }
+
+      if (isMounted) {
+        setProducts(((data ?? []) as unknown) as Product[])
+        setLoading(false)
+      }
+    }
+
+    void loadProducts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
 
   const handleDelete = async (id: string) => {
     const ok = confirm("Delete this product?")

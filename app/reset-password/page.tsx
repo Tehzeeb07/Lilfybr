@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -10,6 +10,21 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const prepare = async () => {
+      const { data } = await supabase.auth.getSession()
+
+      if (!data.session) {
+        setMessage("Open the latest password reset email again, then come back here to set a new password.")
+      }
+
+      setReady(true)
+    }
+
+    void prepare()
+  }, [])
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +45,10 @@ export default function ResetPasswordPage() {
     setTimeout(() => {
       router.push("/login")
     }, 1200)
+  }
+
+  if (!ready) {
+    return <div className="flex min-h-screen items-center justify-center">Loading...</div>
   }
 
   return (

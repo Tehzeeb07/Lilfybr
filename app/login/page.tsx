@@ -1,5 +1,4 @@
 "use client"
-console.log(process.env.NEXT_PUBLIC_SUPABASE_URL)
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -19,19 +18,16 @@ export default function LoginPage() {
     setLoading(true)
     setMessage("")
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-  email,
-  password,
-})
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-console.log("DATA:", data)
-console.log("ERROR:", error)
-
-if (error) {
-  console.error(error)
-  setMessage(JSON.stringify(error, null, 2))
-  return
-}
+    if (error) {
+      setMessage("Invalid email or password.")
+      setLoading(false)
+      return
+    }
 
     setLoading(false)
     router.push("/profile")
