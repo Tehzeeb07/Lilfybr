@@ -8,17 +8,21 @@ import { supabase } from "@/lib/supabase"
 type ProfileRow = {
   email?: string
   role?: string | null
-  full_name?: string | null
-  phone?: string | null
-  avatar_url?: string | null
-  default_address?: Record<string, unknown> | null
-  created_at?: string | null
-  updated_at?: string | null
+}
+
+type FavoriteProduct = {
+  id: string
+  name: string
+}
+
+type FavoriteRow = {
+  product_id: string
 }
 
 export default function ProfilePage() {
   const [user, setUser] = useState<ProfileRow | null>(null)
   const [loading, setLoading] = useState(true)
+  const [favoriteProducts, setFavoriteProducts] = useState<FavoriteProduct[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -33,19 +37,36 @@ export default function ProfilePage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("email, full_name, phone, avatar_url, role, default_address, created_at, updated_at")
+        .select("email, role")
         .eq("id", authData.user.id)
         .single()
+
+      const { data: favorites, error: favError } = await supabase
+        .from("favorites")
+        .select("product_id")
+        .eq("user_id", authData.user.id)
+
+      if (favError) {
+        console.error(favError)
+      } else {
+        const rows = (favorites ?? []) as FavoriteRow[]
+        const ids = rows.map((row) => row.product_id)
+
+        if (ids.length > 0) {
+          const { data: products } = await supabase
+            .from("products")
+            .select("id, name")
+            .in("id", ids)
+
+          setFavoriteProducts((products ?? []) as FavoriteProduct[])
+        } else {
+          setFavoriteProducts([])
+        }
+      }
 
       setUser({
         email: profile?.email ?? authData.user.email,
         role: profile?.role ?? "customer",
-        full_name: profile?.full_name ?? null,
-        phone: profile?.phone ?? null,
-        avatar_url: profile?.avatar_url ?? null,
-        default_address: profile?.default_address ?? null,
-        created_at: profile?.created_at ?? null,
-        updated_at: profile?.updated_at ?? null,
       })
 
       setLoading(false)
@@ -104,42 +125,32 @@ export default function ProfilePage() {
 
         <div className="mt-8 grid gap-4 border bg-[var(--surface)] p-6 text-sm text-[var(--text-soft)] sm:grid-cols-2">
           <p>
-            <span className="font-semibold text-[var(--text)]">Email:</span>{" "}
-            {user?.email}
+            <span className="font-semibold text-[var(--text)]">Email:</span> {user?.email}
           </p>
           <p>
-            <span className="font-semibold text-[var(--text)]">Role:</span>{" "}
-            {user?.role ?? "customer"}
-          </p>
-          <p>
-            <span className="font-semibold text-[var(--text)]">Full name:</span>{" "}
-            {user?.full_name ?? "Not set"}
-          </p>
-          <p>
-            <span className="font-semibold text-[var(--text)]">Phone:</span>{" "}
-            {user?.phone ?? "Not set"}
-          </p>
-          <p>
-            <span className="font-semibold text-[var(--text)]">Avatar:</span>{" "}
-            {user?.avatar_url ?? "Not set"}
-          </p>
-          <p>
-            <span className="font-semibold text-[var(--text)]">Address:</span>{" "}
-            {user?.default_address ? "Saved" : "Not set"}
+            <span className="font-semibold text-[var(--text)]">Role:</span> {user?.role ?? "customer"}
           </p>
         </div>
 
-        <div className="mt-10 border bg-[var(--pink-100)] p-7">
-          <h2 className="font-serif text-3xl font-semibold">Shopping flow</h2>
-          <p className="mt-4 max-w-3xl leading-8 text-[var(--text-soft)]">
-            Anyone can browse products, photos, prices, and descriptions. Signed-in customers can save favorites,
-            add items to cart, place orders, and view order history.
-          </p>
+        <div className="mt-10 border bg-[var(--surface)] p-7">
+          <h2 className="font-serif text-3xl font-semibold">Your Favorites</h2>
+
+          {favoriteProducts.length === 0 ? (
+            <p className="mt-4 text-[var(--text-soft)]">No favorite products yet.</p>
+          ) : (
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {favoriteProducts.map((product) => (
+                <div key={product.id} className="border bg-[var(--pink-100)] p-4">
+                  <span className="font-semibold">{product.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <Link
-            href="/#collection"
+            href="/favourites"
             className="mt-6 inline-flex border border-[var(--pink-500)] bg-[var(--pink-500)] px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[var(--text)]"
           >
-            Continue Browsing
+            Open Favorites Page
           </Link>
         </div>
       </section>
