@@ -152,6 +152,13 @@ export default function ProfilePage() {
           >
             Open Favorites Page
           </Link>
+
+          <Link
+            href="/#collection"
+            className="mt-4 inline-flex border bg-[var(--surface)] px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-[var(--text)] transition hover:border-[var(--pink-400)] hover:text-[var(--pink-500)]"
+          >
+            Browse Products
+          </Link>
         </div>
       </section>
     </main>
