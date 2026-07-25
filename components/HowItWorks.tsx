@@ -6,7 +6,7 @@ const steps = [
   },
   {
     number: "02",
-    title: "We Crochet",
+    title: "We Crochettt",
     text: "Each item is handmade with care using quality yarns and thoughtful detail.",
   },
   {
